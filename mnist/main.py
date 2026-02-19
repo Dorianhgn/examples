@@ -96,26 +96,24 @@ def main():
 
     # prefer CUDA if available, otherwise fall back to accelerator or CPU
     cuda_available = torch.cuda.is_available()
-    use_accel = not args.no_accel and (torch.accelerator.is_available() or cuda_available)
+    use_cuda = not args.no_accel and cuda_available
 
     torch.manual_seed(args.seed)
 
-    if cuda_available:
+    if use_cuda:
         device = torch.device("cuda")
-    elif use_accel and torch.accelerator.is_available():
-        device = torch.accelerator.current_accelerator()
     else:
         device = torch.device("cpu")
 
     train_kwargs = {'batch_size': args.batch_size}
     test_kwargs = {'batch_size': args.test_batch_size}
-    if cuda_available or use_accel:
-        accel_kwargs = {'num_workers': 2,
-                        'persistent_workers': True,
-                        'pin_memory': True,
-                        'shuffle': True}
-        train_kwargs.update(accel_kwargs)
-        test_kwargs.update(accel_kwargs)
+    if use_cuda:
+        cuda_kwargs = {'num_workers': 2,
+                       'persistent_workers': True,
+                       'pin_memory': True,
+                       'shuffle': True}
+        train_kwargs.update(cuda_kwargs)
+        test_kwargs.update(cuda_kwargs)
 
     # Add simple data augmentation for training
     transform = transforms.Compose([
